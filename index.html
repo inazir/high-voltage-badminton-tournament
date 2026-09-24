@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Voltage Badminton Tournament 2026</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .hide-arrows::-webkit-outer-spin-button,
+        .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .hide-arrows { -moz-appearance: textfield; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-12">
+
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-500 p-2 rounded-lg"><i class="fa-solid fa-bolt text-yellow-300"></i></div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold leading-tight">High-Voltage Tournament</h1>
+                    <p class="text-xs text-indigo-200">26.09.2026 • Official Fixture Manager</p>
+                </div>
+            </div>
+            <button onclick="app.resetData()" class="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded transition shadow">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Reset All
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-8">
+
+        <section class="fade-in">
+            <div class="flex items-center space-x-2 mb-4">
+                <i class="fa-solid fa-list-ol text-indigo-600 text-xl"></i>
+                <h2 class="text-xl font-bold text-slate-800">Live Standings</h2>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
+                                <th class="py-3 px-4 w-12 text-center">Rank</th>
+                                <th class="py-3 px-4">Team</th>
+                                <th class="py-3 px-3 text-center">Played</th>
+                                <th class="py-3 px-3 text-center text-emerald-600">Won</th>
+                                <th class="py-3 px-3 text-center text-red-500">Lost</th>
+                                <th class="py-3 px-3 text-center">Point Diff</th>
+                                <th class="py-3 px-4 text-center font-bold text-indigo-600">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standings-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-slate-50 p-3 text-xs text-slate-500 border-t border-slate-200 flex space-x-6">
+                    <span><i class="fa-solid fa-circle text-emerald-500 mr-1 text-[10px]"></i> Top 2 advance to Q1</span>
+                    <span><i class="fa-solid fa-circle text-amber-500 mr-1 text-[10px]"></i> Ranks 3 & 4 to Eliminator</span>
+                    <span>Win = 2 Pts</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="fade-in delay-100">
+            <div class="flex items-center space-x-2 mb-4">
+                <i class="fa-solid fa-trophy text-amber-500 text-xl"></i>
+                <h2 class="text-xl font-bold text-slate-800">Playoffs (IPL Format)</h2>
+                <span class="ml-2 text-xs font-semibold bg-slate-200 text-slate-600 px-2 py-0.5 rounded">Court 3</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="playoffs-container">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <section class="fade-in delay-200">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-table-tennis-paddle-ball text-indigo-600 text-xl"></i>
+                    <h2 class="text-xl font-bold text-slate-800">Round Robin Matches</h2>
+                </div>
+                <div class="text-xs font-medium text-slate-500 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-200">
+                    <span id="completed-count">0</span> / 21 Completed
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="rr-matches-container">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const TEAMS = {
+            'T1': { id: 'T1', name: 'Team 1 (Rayhan & Monir)', short: 'T1 (Rayhan/Monir)' },
+            'T2': { id: 'T2', name: 'Team 2 (Mahfuz & Sanwar)', short: 'T2 (Mahfuz/Sanwar)' },
+            'T3': { id: 'T3', name: 'Team 3 (Sajib & Anik)', short: 'T3 (Sajib/Anik)' },
+            'T4': { id: 'T4', name: 'Team 4 (Kamrul & S. Saha)', short: 'T4 (Kamrul/S.Saha)' },
+            'T5': { id: 'T5', name: 'Team 5 (Utschas & Mahbub)', short: 'T5 (Utschas/Mahbub)' },
+            'T6': { id: 'T6', name: 'Team 6 (Iqbal & Krishan)', short: 'T6 (Iqbal/Krishan)' },
+            'T7': { id: 'T7', name: 'Team 7 (Ashba & Rupom)', short: 'T7 (Ashba/Rupom)' }
+        };
+
+        const INITIAL_RR_MATCHES = [
+            { id: 'M1', time: '00:00 - 00:14', court: 'Court 1', a: 'T1', b: 'T2' },
+            { id: 'M2', time: '00:00 - 00:14', court: 'Court 2', a: 'T3', b: 'T4' },
+            { id: 'M3', time: '00:14 - 00:28', court: 'Court 1', a: 'T5', b: 'T6' },
+            { id: 'M4', time: '00:14 - 00:28', court: 'Court 2', a: 'T1', b: 'T7' },
+            { id: 'M5', time: '00:28 - 00:42', court: 'Court 1', a: 'T2', b: 'T3' },
+            { id: 'M6', time: '00:28 - 00:42', court: 'Court 2', a: 'T4', b: 'T5' },
+            { id: 'M7', time: '00:42 - 00:56', court: 'Court 1', a: 'T6', b: 'T7' },
+            { id: 'M8', time: '00:42 - 00:56', court: 'Court 2', a: 'T1', b: 'T3' },
+            { id: 'M9', time: '00:56 - 01:10', court: 'Court 1', a: 'T2', b: 'T4' },
+            { id: 'M10', time: '00:56 - 01:10', court: 'Court 2', a: 'T5', b: 'T7' },
+            { id: 'M11', time: '01:10 - 01:24', court: 'Court 1', a: 'T1', b: 'T6' },
+            { id: 'M12', time: '01:10 - 01:24', court: 'Court 2', a: 'T3', b: 'T5' },
+            { id: 'M13', time: '01:24 - 01:38', court: 'Court 1', a: 'T2', b: 'T7' },
+            { id: 'M14', time: '01:24 - 01:38', court: 'Court 2', a: 'T4', b: 'T6' },
+            { id: 'M15', time: '01:38 - 01:52', court: 'Court 1', a: 'T1', b: 'T5' },
+            { id: 'M16', time: '01:38 - 01:52', court: 'Court 2', a: 'T2', b: 'T6' },
+            { id: 'M17', time: '01:52 - 02:06', court: 'Court 1', a: 'T3', b: 'T7' },
+            { id: 'M18', time: '01:52 - 02:06', court: 'Court 2', a: 'T1', b: 'T4' },
+            { id: 'M19', time: '02:06 - 02:20', court: 'Court 1', a: 'T2', b: 'T5' },
+            { id: 'M20', time: '02:06 - 02:20', court: 'Court 2', a: 'T3', b: 'T6' },
+            { id: 'M21', time: '02:20 - 02:30', court: 'Court 1', a: 'T4', b: 'T7' }
+        ].map(m => ({ ...m, scoreA: '', scoreB: '', isSaved: false, winner: null }));
+
+        const INITIAL_PLAYOFFS = {
+            Q1: { id: 'Q1', title: 'Qualifier 1', time: '02:30 - 02:45', a: null, b: null, labelA: 'Rank 1 Team', labelB: 'Rank 2 Team', scoreA: '', scoreB: '', isSaved: false, winner: null, loser: null },
+            EL: { id: 'EL', title: 'Eliminator', time: '02:45 - 03:00', a: null, b: null, labelA: 'Rank 3 Team', labelB: 'Rank 4 Team', scoreA: '', scoreB: '', isSaved: false, winner: null, loser: null },
+            Q2: { id: 'Q2', title: 'Qualifier 2', time: '03:00 - 03:15', a: null, b: null, labelA: 'Loser of Q1', labelB: 'Winner of EL', scoreA: '', scoreB: '', isSaved: false, winner: null, loser: null },
+            FINAL: { id: 'FINAL', title: 'FINAL', time: '03:15 - 03:30', a: null, b: null, labelA: 'Winner of Q1', labelB: 'Winner of Q2', scoreA: '', scoreB: '', isSaved: false, winner: null, loser: null }
+        };
+
+        const app = {
+            state: {
+                rr: JSON.parse(JSON.stringify(INITIAL_RR_MATCHES)),
+                playoffs: JSON.parse(JSON.stringify(INITIAL_PLAYOFFS)),
+                standings: []
+            },
+
+            init() {
+                this.loadData();
+                this.calculateStandings();
+                this.render();
+            },
+
+            loadData() {
+                const saved = localStorage.getItem('hv-badminton-state');
+                if (saved) {
+                    this.state = JSON.parse(saved);
+                }
+            },
+
+            saveData() {
+                localStorage.setItem('hv-badminton-state', JSON.stringify(this.state));
+            },
+
+            resetData() {
+                if(confirm("Are you sure you want to reset all tournament data? This cannot be undone.")) {
+                    this.state.rr = JSON.parse(JSON.stringify(INITIAL_RR_MATCHES));
+                    this.state.playoffs = JSON.parse(JSON.stringify(INITIAL_PLAYOFFS));
+                    this.calculateStandings();
+                    this.saveData();
+                    this.render();
+                }
+            },
+
+            calculateStandings() {
+                let stats = {};
+                Object.keys(TEAMS).forEach(tid => {
+                    stats[tid] = { id: tid, p: 0, w: 0, l: 0, pts: 0, pd: 0 };
+                });
+
+                let completedRR = 0;
+
+                this.state.rr.forEach(m => {
+                    if (m.isSaved) {
+                        completedRR++;
+                        let sA = parseInt(m.scoreA);
+                        let sB = parseInt(m.scoreB);
+                        
+                        stats[m.a].p++;
+                        stats[m.b].p++;
+                        
+                        stats[m.a].pd += (sA - sB);
+                        stats[m.b].pd += (sB - sA);
+
+                        if (sA > sB) {
+                            stats[m.a].w++;
+                            stats[m.a].pts += 2;
+                            stats[m.b].l++;
+                        } else if (sB > sA) {
+                            stats[m.b].w++;
+                            stats[m.b].pts += 2;
+                            stats[m.a].l++;
+                        }
+                    }
+                });
+
+                document.getElementById('completed-count').innerText = completedRR;
+
+                // Sort: Points (Desc), then Point Diff (Desc)
+                this.state.standings = Object.values(stats).sort((a, b) => {
+                    if (b.pts !== a.pts) return b.pts - a.pts;
+                    return b.pd - a.pd;
+                });
+
+                this.propagatePlayoffTeams();
+            },
+
+            propagatePlayoffTeams() {
+                const s = this.state.standings;
+                const p = this.state.playoffs;
+
+                // Assign Q1 and EL if they haven't been completed manually yet
+                if (!p.Q1.isSaved && s.length >= 2) {
+                    p.Q1.a = s[0].p > 0 ? s[0].id : null;
+                    p.Q1.b = s[1].p > 0 ? s[1].id : null;
+                }
+                if (!p.EL.isSaved && s.length >= 4) {
+                    p.EL.a = s[2].p > 0 ? s[2].id : null;
+                    p.EL.b = s[3].p > 0 ? s[3].id : null;
+                }
+
+                // Assign Q2
+                if (!p.Q2.isSaved) {
+                    p.Q2.a = p.Q1.loser || null;
+                    p.Q2.b = p.EL.winner || null;
+                }
+
+                // Assign Final
+                if (!p.FINAL.isSaved) {
+                    p.FINAL.a = p.Q1.winner || null;
+                    p.FINAL.b = p.Q2.winner || null;
+                }
+            },
+
+            saveRRMatch(index) {
+                const m = this.state.rr[index];
+                const inputA = document.getElementById(`rr-a-${index}`).value;
+                const inputB = document.getElementById(`rr-b-${index}`).value;
+
+                if (inputA === '' || inputB === '') return alert("Please enter scores for both teams.");
+                
+                m.scoreA = inputA;
+                m.scoreB = inputB;
+                m.isSaved = true;
+                m.winner = parseInt(inputA) > parseInt(inputB) ? m.a : m.b;
+                
+                this.calculateStandings();
+                this.saveData();
+                this.render();
+            },
+
+            editRRMatch(index) {
+                this.state.rr[index].isSaved = false;
+                this.calculateStandings();
+                this.saveData();
+                this.render();
+            },
+
+            savePlayoff(key) {
+                const match = this.state.playoffs[key];
+                if(!match.a || !match.b) return alert("Teams are not decided yet.");
+
+                const inputA = document.getElementById(`po-a-${key}`).value;
+                const inputB = document.getElementById(`po-b-${key}`).value;
+
+                if (inputA === '' || inputB === '') return alert("Please enter scores for both teams.");
+
+                match.scoreA = inputA;
+                match.scoreB = inputB;
+                match.isSaved = true;
+                
+                if (parseInt(inputA) > parseInt(inputB)) {
+                    match.winner = match.a;
+                    match.loser = match.b;
+                } else {
+                    match.winner = match.b;
+                    match.loser = match.a;
+                }
+
+                this.calculateStandings(); // Re-triggers playoff propagation
+                this.saveData();
+                this.render();
+            },
+
+            editPlayoff(key) {
+                this.state.playoffs[key].isSaved = false;
+                this.state.playoffs[key].winner = null;
+                this.state.playoffs[key].loser = null;
+                
+                // Cascade un-save downstream matches
+                if (key === 'Q1' || key === 'EL') {
+                    this.state.playoffs['Q2'].isSaved = false;
+                    this.state.playoffs['FINAL'].isSaved = false;
+                }
+                if (key === 'Q2') {
+                    this.state.playoffs['FINAL'].isSaved = false;
+                }
+
+                this.calculateStandings();
+                this.saveData();
+                this.render();
+            },
+
+            render() {
+                this.renderStandings();
+                this.renderRR();
+                this.renderPlayoffs();
+            },
+
+            renderStandings() {
+                const tbody = document.getElementById('standings-body');
+                tbody.innerHTML = this.state.standings.map((team, idx) => {
+                    let badgeColor = 'bg-slate-100 text-slate-500';
+                    let rankIcon = `#${idx + 1}`;
+                    
+                    if(idx < 2) { badgeColor = 'bg-emerald-100 text-emerald-700'; rankIcon = `<i class="fa-solid fa-medal mr-1"></i> Q1`; }
+                    else if (idx < 4) { badgeColor = 'bg-amber-100 text-amber-700'; rankIcon = `<i class="fa-solid fa-star mr-1"></i> EL`; }
+
+                    return `
+                    <tr class="${idx < 4 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-50 transition">
+                        <td class="py-2.5 px-4 text-center">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-md ${badgeColor}">${rankIcon}</span>
+                        </td>
+                        <td class="py-2.5 px-4 font-medium">${TEAMS[team.id].name}</td>
+                        <td class="py-2.5 px-3 text-center text-slate-600">${team.p}</td>
+                        <td class="py-2.5 px-3 text-center text-emerald-600 font-semibold">${team.w}</td>
+                        <td class="py-2.5 px-3 text-center text-red-500 font-semibold">${team.l}</td>
+                        <td class="py-2.5 px-3 text-center font-mono text-xs ${team.pd > 0 ? 'text-emerald-500' : (team.pd < 0 ? 'text-red-500' : 'text-slate-400')}">${team.pd > 0 ? '+'+team.pd : team.pd}</td>
+                        <td class="py-2.5 px-4 text-center font-bold text-indigo-600 text-base">${team.pts}</td>
+                    </tr>
+                `}).join('');
+            },
+
+            renderRR() {
+                const container = document.getElementById('rr-matches-container');
+                container.innerHTML = this.state.rr.map((m, i) => this.createMatchCard(m, i, 'rr')).join('');
+            },
+
+            renderPlayoffs() {
+                const container = document.getElementById('playoffs-container');
+                const p = this.state.playoffs;
+                
+                // Playoff specific card renderer
+                const renderPOCard = (key, styleClass) => {
+                    const match = p[key];
+                    const teamAName = match.a ? TEAMS[match.a].short : `<span class="text-slate-400 italic">${match.labelA}</span>`;
+                    const teamBName = match.b ? TEAMS[match.b].short : `<span class="text-slate-400 italic">${match.labelB}</span>`;
+                    const isReady = match.a && match.b;
+                    
+                    let bgClasses = match.isSaved ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200';
+                    if (key === 'FINAL' && match.isSaved) bgClasses = 'bg-amber-100 border-amber-300 shadow-md';
+
+                    return `
+                    <div class="rounded-xl border ${bgClasses} p-4 shadow-sm flex flex-col ${styleClass}">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-3">
+                            <span class="font-bold text-xs uppercase tracking-wider ${key === 'FINAL' ? 'text-amber-600' : 'text-indigo-600'}">${match.title}</span>
+                            <div class="text-[10px] text-slate-500 font-medium bg-white px-2 py-1 rounded shadow-sm">
+                                <i class="fa-regular fa-clock mr-1"></i> ${match.time}
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3 flex-grow">
+                            <!-- Team A -->
+                            <div class="flex justify-between items-center bg-white p-2 rounded-lg border ${match.isSaved && match.winner === match.a ? 'border-emerald-400 shadow-sm' : 'border-slate-100'}">
+                                <span class="text-sm font-semibold truncate flex-1 mr-2 ${match.isSaved && match.winner === match.a ? 'text-emerald-700' : 'text-slate-700'}">${teamAName}</span>
+                                ${match.isSaved ? 
+                                    `<span class="font-bold text-lg w-12 text-center">${match.scoreA}</span>` : 
+                                    `<input type="number" id="po-a-${key}" class="w-12 h-8 text-center border rounded-md hide-arrows font-bold text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${!isReady ? 'opacity-50' : ''}" value="${match.scoreA}" ${!isReady ? 'disabled' : ''}>`
+                                }
+                            </div>
+                            
+                            <!-- Team B -->
+                            <div class="flex justify-between items-center bg-white p-2 rounded-lg border ${match.isSaved && match.winner === match.b ? 'border-emerald-400 shadow-sm' : 'border-slate-100'}">
+                                <span class="text-sm font-semibold truncate flex-1 mr-2 ${match.isSaved && match.winner === match.b ? 'text-emerald-700' : 'text-slate-700'}">${teamBName}</span>
+                                ${match.isSaved ? 
+                                    `<span class="font-bold text-lg w-12 text-center">${match.scoreB}</span>` : 
+                                    `<input type="number" id="po-b-${key}" class="w-12 h-8 text-center border rounded-md hide-arrows font-bold text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${!isReady ? 'opacity-50' : ''}" value="${match.scoreB}" ${!isReady ? 'disabled' : ''}>`
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-100 text-right">
+                            ${match.isSaved ? 
+                                `<button onclick="app.editPlayoff('${key}')" class="text-xs text-slate-500 hover:text-indigo-600 font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition"><i class="fa-solid fa-pen mr-1"></i> Edit Score</button>` : 
+                                `<button onclick="app.savePlayoff('${key}')" class="text-xs text-white font-medium px-4 py-2 rounded-lg transition shadow-sm ${isReady ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-300 cursor-not-allowed'}" ${!isReady ? 'disabled' : ''}><i class="fa-solid fa-check mr-1"></i> Save Result</button>`
+                            }
+                        </div>
+                    </div>
+                    `;
+                };
+
+                container.innerHTML = `
+                    ${renderPOCard('Q1', '')}
+                    ${renderPOCard('EL', '')}
+                    ${renderPOCard('Q2', 'md:col-span-1')}
+                    ${renderPOCard('FINAL', 'md:col-span-1 ring-2 ring-amber-400 border-none')}
+                `;
+            },
+
+            createMatchCard(m, index) {
+                const teamAName = TEAMS[m.a].short;
+                const teamBName = TEAMS[m.b].short;
+                
+                return `
+                <div class="bg-white rounded-xl border ${m.isSaved ? 'border-emerald-200 shadow-sm' : 'border-slate-200'} p-4 flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded">${m.id}</span>
+                        <div class="flex space-x-2 text-[10px] text-slate-500 font-medium">
+                            <span class="bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded"><i class="fa-regular fa-clock mr-0.5"></i> ${m.time}</span>
+                            <span class="bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded"><i class="fa-solid fa-map-pin mr-0.5"></i> ${m.court}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 flex-grow">
+                        <div class="flex justify-between items-center p-2 rounded border ${m.isSaved && m.winner === m.a ? 'bg-emerald-50 border-emerald-200' : 'border-transparent'}">
+                            <span class="text-sm font-semibold text-slate-700 truncate mr-2">${teamAName}</span>
+                            ${m.isSaved ? 
+                                `<span class="font-bold text-lg w-10 text-center ${m.winner === m.a ? 'text-emerald-700' : ''}">${m.scoreA}</span>` : 
+                                `<input type="number" id="rr-a-${index}" class="w-12 text-center border border-slate-300 rounded py-1 hide-arrows font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" value="${m.scoreA}">`
+                            }
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded border ${m.isSaved && m.winner === m.b ? 'bg-emerald-50 border-emerald-200' : 'border-transparent'}">
+                            <span class="text-sm font-semibold text-slate-700 truncate mr-2">${teamBName}</span>
+                            ${m.isSaved ? 
+                                `<span class="font-bold text-lg w-10 text-center ${m.winner === m.b ? 'text-emerald-700' : ''}">${m.scoreB}</span>` : 
+                                `<input type="number" id="rr-b-${index}" class="w-12 text-center border border-slate-300 rounded py-1 hide-arrows font-semibold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" value="${m.scoreB}">`
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-right border-t border-slate-100 pt-3">
+                        ${m.isSaved ? 
+                            `<button onclick="app.editRRMatch(${index})" class="text-[11px] text-slate-500 hover:text-indigo-600 font-medium px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 transition">Edit</button>` : 
+                            `<button onclick="app.saveRRMatch(${index})" class="text-[11px] bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white font-medium px-4 py-1.5 rounded transition shadow-sm border border-indigo-100 hover:border-transparent">Save</button>`
+                        }
+                    </div>
+                </div>
+                `;
+            }
+        };
+
+        // Initialize App on DOM Load
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
